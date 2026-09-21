@@ -1,29 +1,57 @@
-@Library('Shared')_
+@Library("shared") _
 pipeline{
-    agent { label 'dev-server'}
+    agent {label "dev"}
     
     stages{
-        stage("Code clone"){
+        stage("code"){
             steps{
-                sh "whoami"
-            clone("https://github.com/LondheShubham153/django-notes-app.git","main")
+                script{
+                    clone("https://github.com/tauseefkhorajia/django-notes-app.git", "main")
+                }
             }
         }
-        stage("Code Build"){
+        stage("build"){
             steps{
-            dockerbuild("notes-app","latest")
+                sh "docker build -t django-notes-app ."
             }
         }
-        stage("Push to DockerHub"){
+        stage("test"){
             steps{
-                dockerpush("dockerHubCreds","notes-app","latest")
+                echo "devloper test likhega"
             }
         }
-        stage("Deploy"){
+        stage("push-to-dockerHub"){
             steps{
-                deploy()
+                script{
+                    docker_push("dockerHubCred", "django-notes-app")
+                }
             }
         }
-        
+        stage("deploy"){
+            steps{
+                sh "docker compose up -d"
+            }
+        }
     }
+
+post{
+    success{
+            script{
+                emailext from: 'tosifkhorajia@gmail.com',
+                to: 'tosifkhorajia@gmail.com',
+                body: 'Build success for Demo CICD App',
+                subject: 'Build success for Demo CICD App'
+            }
+        }
+        failure{
+            script{
+                emailext from: 'tosifkhorajia@gmail.com',
+                to: 'tosifkhorajia@gmail.com',
+                body: 'Build Failed for Demo CICD App',
+                subject: 'Build Failed for Demo CICD App'
+            }
+        }
+}
+
+    
 }
